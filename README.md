@@ -1,15 +1,22 @@
-# FFmpeg 7.1
+# FFmpeg 9.0.2
 <div style="display: inline">
 <img src="https://icon-library.com/images/ffmpeg-icon/ffmpeg-icon-20.jpg" style="width: 20px; height: 20px;">
 <img src="https://colab.research.google.com/img/colab_favicon_256px.png" style="width: 20px; height: 20px;">
 <div>
-FFmpeg 7.1 binary for Google Colab
+FFmpeg 9.0.2 binary for Google Colab
 This FFmpeg depends on opengl.
 
 ### [=] Installation
 ```
-!bash <(curl -s https://raw.githubusercontent.com/XniceCraft/ffmpeg-colab/master/install)
+!bash <(curl -s https://raw.githubusercontent.com/ClankJake/ffmpeg-colab/master/install)
 ```
+
+Para instalar outra versão já publicada nas releases:
+```
+!FFMPEG_VERSION=8.1.3 bash <(curl -s https://raw.githubusercontent.com/ClankJake/ffmpeg-colab/master/install)
+```
+
+> Fork de [XniceCraft/ffmpeg-colab](https://github.com/XniceCraft/ffmpeg-colab). A lista de bibliotecas abaixo ainda é a do build 7.1 e deve ser revisada após o primeiro build novo.
 
 ### [=] External Library
 * ffnvcodec 11.1.5.3

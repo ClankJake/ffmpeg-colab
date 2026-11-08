@@ -1,42 +1,47 @@
 #!/bin/bash
+# Instala o FFmpeg estático no Google Colab.
+# Uso: bash install            (versão padrão)
+#      FFMPEG_VERSION=8.1.3 bash install
+set -eu
 
-set -e -u
+FFMPEG_VERSION="${FFMPEG_VERSION:-9.0.2}"
+REPO="${FFMPEG_REPO:-ClankJake/ffmpeg-colab}"
+URL="https://github.com/${REPO}/releases/download/${FFMPEG_VERSION}/ffmpeg"
 
-FFMPEGLOC=$(which ffmpeg)
-CURL_EXISTS=$(command -v "curl")
-WGET_EXISTS=$(command -v "wget")
-if [ -z $CURL_EXISTS ] && [ -z $WGET_EXISTS ]; then
+if command -v curl >/dev/null 2>&1; then
+    DL() { curl -fL --retry 3 -o "$1" "$URL"; }
+elif command -v wget >/dev/null 2>&1; then
+    DL() { wget -q --tries=3 "$URL" -O "$1"; }
+else
     echo "Please install either wget or curl"
     exit 1
 fi
 
-if [ -z "$FFMPEGLOC" ]; then
-    echo "No FFmpeg found"
-else
-    echo "FFmpeg was found at "$FFMPEGLOC
+# `which` retorna erro quando não acha nada; com `set -e` isso abortaria o script
+FFMPEGLOC="$(command -v ffmpeg || true)"
+if [ -n "$FFMPEGLOC" ]; then
+    echo "FFmpeg was found at $FFMPEGLOC"
     echo "Removing old FFmpeg"
-    rm -rf $FFMPEGLOC
-    echo "Done"
+    rm -f "$FFMPEGLOC"
 fi
 
-if [ ! -f "ffmpeg" ]; then
-    if [ $WGET_EXISTS ]; then
-        wget "https://github.com/XniceCraft/ffmpeg-colab/releases/download/7.1/ffmpeg" -O ffmpeg
-    elif [ $CURL_EXISTS ]; then
-        curl -o ffmpeg "https://github.com/XniceCraft/ffmpeg-colab/releases/download/7.1/ffmpeg"
-    fi
-fi
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
 
-if [ -f "ffmpeg" ]; then
-    echo "Moving new ffmpeg to /usr/bin"
-    chmod +x ffmpeg
-    if [ $(mv ffmpeg "/usr/bin/"; echo $?) != 0 ]; then
-        echo "Failed move ffmpeg to /usr/bin"
-        echo "Moving new ffmpeg to /usr/local/bin"
-        if [ $(mv ffmpeg "/usr/local/bin/"; echo $?) != 0 ]; then
-            echo "Installation failed. Please check your permission"
-            exit 1
-        fi
-    fi
-    echo "FFmpeg was successfully installed"
+echo "Downloading FFmpeg ${FFMPEG_VERSION}"
+if ! DL "$TMP"; then
+    echo "Download failed: $URL"
+    exit 1
 fi
+chmod +x "$TMP"
+
+for DEST in /usr/bin /usr/local/bin; do
+    if mv "$TMP" "$DEST/ffmpeg" 2>/dev/null; then
+        echo "FFmpeg was successfully installed to $DEST"
+        ffmpeg -version | head -n 1
+        exit 0
+    fi
+    echo "Failed to move ffmpeg to $DEST"
+done
+echo "Installation failed. Please check your permissions"
+exit 1
