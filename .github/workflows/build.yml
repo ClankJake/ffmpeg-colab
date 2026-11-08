@@ -1,0 +1,61 @@
+name: Build FFmpeg release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão do FFmpeg (ex.: 9.0.2)"
+        required: true
+        default: "9.0.2"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04   # glibc compatível com o Colab (Ubuntu 22.04)
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependências de sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm yasm pkg-config autoconf automake \
+            libtool cmake meson ninja-build git curl xz-utils python3-pip \
+            libgl1-mesa-dev libglu1-mesa-dev libfontconfig1-dev
+
+      - name: Obter o builder e trocar a versão do FFmpeg
+        run: |
+          git clone --depth 1 https://github.com/XniceCraft/ffmpeg-builder builder
+          cd builder
+          V="${{ inputs.version }}"
+          sed -i -E "s#ffmpeg-[0-9]+(\.[0-9]+)+\.tar\.xz#ffmpeg-${V}.tar.xz#g; s#\"folder_name\": \"ffmpeg-[0-9.]+\"#\"folder_name\": \"ffmpeg-${V}\"#" libraries.json
+          grep -n "ffmpeg-${V}" libraries.json
+          pip install -r requirements.txt
+
+      - name: Compilar
+        working-directory: builder
+        env:
+          CFLAGS: "-mtune=generic"
+        run: |
+          sudo mkdir -p /home/ffmpeg-builder && sudo chown "$USER" /home/ffmpeg-builder
+          python build.py --use-system-build-tools --use-nonfree-libs --static-ffmpeg \
+            --exclude-targets "ffmpeg-msys2-deps" --disable-ffplay \
+            --extra-ffmpeg-args="--enable-nvenc --enable-nvdec --enable-cuvid --toolchain=hardened --disable-stripping --enable-opengl " \
+            --build
+
+      - name: Localizar o binário
+        run: |
+          BIN="$(find / -type f -path '*release/bin/ffmpeg' 2>/dev/null | head -n1)"
+          echo "BIN=$BIN" >> "$GITHUB_ENV"
+          "$BIN" -version | head -n 1
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.version }}" "$BIN" \
+            --title "FFmpeg ${{ inputs.version }}" \
+            --notes "Static FFmpeg ${{ inputs.version }} para Google Colab" \
+            || gh release upload "${{ inputs.version }}" "$BIN" --clobber
