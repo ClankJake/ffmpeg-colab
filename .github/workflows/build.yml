@@ -42,6 +42,9 @@ jobs:
               "nv-codec-headers-n13.0.19.1.tar.gz",
           ]
           d["ffnvcodec"]["folder_name"] = "nv-codec-headers-n13.0.19.1"
+          # HarfBuzz: o port CMake está deprecado -> Meson (módulo em patches/harfbuzz.py)
+          d["harfbuzz"]["configuration"] = "meson"
+          d["harfbuzz"]["configure_params"] = ["--default-library=static", "--auto-features=disabled"]
           # gmplib.org fica fora do ar/inacessível no runner: usa o espelho do GNU (mesmo tarball 6.3.0)
           d["gmp"]["download_params"] = [
               "https://ftpmirror.gnu.org/gmp/gmp-6.3.0.tar.xz",
@@ -50,6 +53,10 @@ jobs:
           json.dump(d, open("libraries.json", "w"), indent=4)
           PY
           grep -n "n13.0.19.1" libraries.json
+          cp ../patches/harfbuzz.py libraries/harfbuzz.py
+          # mostra o erro real se o autoreconf do libbluray falhar (o builder o roda em modo silencioso)
+          sed -i 's/, silent=options.silent//' libraries/libbluray.py
+          grep -n autoreconf libraries/libbluray.py
           # Atualiza as bibliotecas externas para a versão estável mais nova (valida cada download).
           python3 ../scripts/update_libs.py libraries.json ../lib-versions.md
           cat ../lib-versions.md >> "$GITHUB_STEP_SUMMARY"
