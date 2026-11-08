@@ -42,6 +42,11 @@ jobs:
               "nv-codec-headers-n13.0.19.1.tar.gz",
           ]
           d["ffnvcodec"]["folder_name"] = "nv-codec-headers-n13.0.19.1"
+          # gmplib.org fica fora do ar/inacessível no runner: usa o espelho do GNU (mesmo tarball 6.3.0)
+          d["gmp"]["download_params"] = [
+              "https://ftpmirror.gnu.org/gmp/gmp-6.3.0.tar.xz",
+              "gmp-6.3.0.tar.xz",
+          ]
           json.dump(d, open("libraries.json", "w"), indent=4)
           PY
           grep -n "n13.0.19.1" libraries.json
@@ -53,7 +58,7 @@ jobs:
           grep -n -- '--libdir=lib' libraries/openssl.py
           # Torna o download robusto: --fail evita salvar página de erro como se fosse o .tar,
           # --retry tenta de novo, e o tar deixa de ser silencioso para mostrar o erro real.
-          sed -i 's#"--insecure", "-L", "--silent", "-o"#"--insecure", "-fL", "--retry", "3", "--retry-delay", "5", "--silent", "--show-error", "-o"#' build.py
+          sed -i 's#"--insecure", "-L", "--silent", "-o"#"--insecure", "-fL", "--retry", "3", "--retry-delay", "5", "--silent", "--show-error", "--connect-timeout", "20", "-o"#' build.py
           sed -i '396s#silent=True#silent=False#' build.py
           grep -n '"--retry"' build.py
           pip install -r requirements.txt
