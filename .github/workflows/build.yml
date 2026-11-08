@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential nasm yasm pkg-config autoconf automake \
-            libtool cmake meson ninja-build git curl xz-utils python3-pip \
+            libtool libtool-bin gperf gettext autopoint texinfo cmake meson ninja-build git curl xz-utils python3-pip \
             libgl1-mesa-dev libglu1-mesa-dev libfontconfig1-dev
 
       - name: Obter o builder e trocar a versão do FFmpeg
