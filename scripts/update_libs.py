@@ -19,7 +19,8 @@ import tempfile
 LIBS = {
     "libaom":       dict(repo="https://aomedia.googlesource.com/aom", tag=r"^v(\d+\.\d+\.\d+)$"),
     "libass":       dict(repo="https://github.com/libass/libass", tag=r"^(\d+\.\d+\.\d+)$", autotools=True),
-    "libbluray":    dict(repo="https://code.videolan.org/videolan/libbluray", tag=r"^(\d+\.\d+\.\d+)$"),
+    # libbluray: o autoreconf do builder falha no tarball da 1.5.x; fica na 1.3.4, que o builder foi escrito para usar
+    "libbluray":    dict(repo=None),
     "libdav1d":     dict(repo="https://code.videolan.org/videolan/dav1d", tag=r"^(\d+\.\d+\.\d+)$"),
     "libfdk-aac":   dict(repo="https://github.com/mstorsjo/fdk-aac", tag=r"^v(\d+\.\d+\.\d+)$"),
     "libfontconfig": dict(repo="https://gitlab.freedesktop.org/fontconfig/fontconfig", tag=r"^(\d+\.\d+\.\d+)$", autotools=True),
@@ -104,7 +105,7 @@ def main():
         old = m.group(0) if m else "?"
         print(f"{name}: {old}")
         if not cfg.get("repo"):
-            rows.append((name, old, old, "já é a última"))
+            rows.append((name, old, old, "fixada" if name == "libbluray" else "já é a última"))
             continue
         cands = tags(cfg["repo"], cfg["tag"], cfg.get("transform"))
         chosen = None
