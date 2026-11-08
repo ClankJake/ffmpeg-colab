@@ -54,9 +54,8 @@ jobs:
           PY
           grep -n "n13.0.19.1" libraries.json
           cp ../patches/harfbuzz.py libraries/harfbuzz.py
-          # mostra o erro real se o autoreconf do libbluray falhar (o builder o roda em modo silencioso)
-          sed -i 's/, silent=options.silent//' libraries/libbluray.py
-          grep -n autoreconf libraries/libbluray.py
+          # libbluray: renomeia dec_init (conflita com fftools/ffmpeg_dec.c do FFmpeg >= 8) e mostra erros do autoreconf
+          cp ../patches/libbluray.py libraries/libbluray.py
           # Atualiza as bibliotecas externas para a versão estável mais nova (valida cada download).
           python3 ../scripts/update_libs.py libraries.json ../lib-versions.md
           cat ../lib-versions.md >> "$GITHUB_STEP_SUMMARY"
